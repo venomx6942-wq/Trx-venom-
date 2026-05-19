@@ -119,10 +119,12 @@ if(isset($_POST['add_funds_req'])) {
     if($amount >= 100) {
         $db->exec("INSERT INTO fund_requests (user_id, amount, utr) VALUES ($uid, $amount, '$utr')");
         $user = $db->querySingle("SELECT * FROM users WHERE id=$uid", true);
-        botRequest("sendMessage", [
-            'chat_id' => OWNER_ID,
-            'text' => "💰 PAYMENT REQUEST\n👤 User: {$user['name']}\n🆔 ID: $uid\n📧 {$user['email']}\n₹$amount\n🔑 UTR: $utr"
-        ]);
+        if($user) {
+            botRequest("sendMessage", [
+                'chat_id' => OWNER_ID,
+                'text' => "💰 PAYMENT REQUEST\n👤 User: {$user['name']}\n🆔 ID: $uid\n📧 {$user['email']}\n₹$amount\n🔑 UTR: $utr"
+            ]);
+        }
         $msg = "✅ Request sent. Wait for approval.";
     } else {
         $msg = "Minimum ₹100";
@@ -142,10 +144,13 @@ $user = null;
 $banned = false;
 if(isset($_SESSION['user_id'])) {
     $user = $db->querySingle("SELECT * FROM users WHERE id=".$_SESSION['user_id'], true);
-    if($user && $user['banned'] == 1) $banned = true;
+    if($user && isset($user['banned']) && $user['banned'] == 1) $banned = true;
 }
 
 $msg = isset($_GET['msg']) ? $_GET['msg'] : '';
+
+// VENOM X Logo Image (Tu diya hua link)
+$venom_logo_url = "https://i.ibb.co/R4ccFrw4/file-76.jpg";
 ?>
 <!DOCTYPE html>
 <html lang="en">
@@ -158,12 +163,11 @@ $msg = isset($_GET['msg']) ? $_GET['msg'] : '';
         body { background: #0a0a0a; font-family: 'Segoe UI', sans-serif; color: #fff; }
         .container { min-height: 100vh; display: flex; justify-content: center; align-items: center; padding: 20px; background: linear-gradient(135deg, #0a0a0a, #1a0033); }
         .card { background: #111; border-radius: 20px; padding: 40px; width: 100%; max-width: 450px; text-align: center; border: 1px solid #9b59b6; box-shadow: 0 0 20px rgba(155,89,182,0.3); }
-        .logo { font-size: 2.5rem; font-weight: bold; background: linear-gradient(90deg, #9b59b6, #ff00cc); -webkit-background-clip: text; background-clip: text; color: transparent; margin-bottom: 20px; }
+        .logo-img { max-width: 200px; margin-bottom: 20px; }
         input { width: 100%; padding: 12px; margin: 10px 0; background: #1a1a1a; border: 1px solid #333; border-radius: 8px; color: #fff; }
         button { width: 100%; padding: 12px; background: #9b59b6; color: #fff; border: none; border-radius: 8px; font-weight: bold; cursor: pointer; }
         .switch { margin-top: 15px; color: #aaa; cursor: pointer; }
         .switch span { color: #9b59b6; }
-        hr { margin: 20px 0; border-color: #333; }
         .dashboard { min-height: 100vh; background: linear-gradient(135deg, #0a0a0a, #1a0033); padding: 20px; }
         .navbar { display: flex; justify-content: space-between; align-items: center; background: #111; padding: 15px; border-radius: 12px; margin-bottom: 20px; border: 1px solid #9b59b6; }
         .wallet-card { background: #1a0033; padding: 20px; border-radius: 12px; margin-bottom: 20px; text-align: center; border: 1px solid #9b59b6; }
@@ -180,6 +184,7 @@ $msg = isset($_GET['msg']) ? $_GET['msg'] : '';
         .bonus-btn { flex: 1; background: #1a0033; border: 1px solid #9b59b6; padding: 10px; }
         .whatsapp-link { display: inline-block; background: #25D366; color: #fff; padding: 8px 15px; border-radius: 8px; text-decoration: none; margin-top: 10px; }
         .order-item, .notif-item { background: #1a1a1a; padding: 10px; margin: 8px 0; border-radius: 8px; border-left: 3px solid #9b59b6; text-align: left; }
+        .navbar-logo { height: 40px; }
     </style>
 </head>
 <body>
@@ -187,7 +192,7 @@ $msg = isset($_GET['msg']) ? $_GET['msg'] : '';
 <?php if($banned): ?>
 <div class="container">
     <div class="card">
-        <div class="logo">VENOM X</div>
+        <img src="<?php echo $venom_logo_url; ?>" class="logo-img" alt="VENOM X">
         <h2 style="color:#ff4444">🚫 You Are Banned</h2>
         <p>Contact support:</p>
         <a href="https://wa.me/9485813638" class="whatsapp-link">📞 WhatsApp Support</a>
@@ -197,7 +202,7 @@ $msg = isset($_GET['msg']) ? $_GET['msg'] : '';
 <?php elseif(!isset($_SESSION['user_id'])): ?>
 <div class="container">
     <div class="card">
-        <div class="logo">VENOM X</div>
+        <img src="<?php echo $venom_logo_url; ?>" class="logo-img" alt="VENOM X">
         <p style="margin-bottom:20px">India's #1 Free Fire Top Up</p>
         
         <form method="post">
@@ -225,16 +230,16 @@ $msg = isset($_GET['msg']) ? $_GET['msg'] : '';
 <div class="dashboard">
     <div class="navbar">
         <div class="menu-icon" onclick="toggleSidebar()">☰</div>
-        <div class="logo" style="font-size:1.5rem">VENOM X</div>
-        <div>ID: <?php echo $user['id']; ?></div>
+        <img src="<?php echo $venom_logo_url; ?>" class="navbar-logo" alt="VENOM X">
+        <div>ID: <?php echo isset($user['id']) ? $user['id'] : '?'; ?></div>
     </div>
 
     <div class="sidebar" id="sidebar">
         <div class="close-sidebar" onclick="toggleSidebar()">✕</div>
         <div style="text-align:center;margin:20px 0">
             <div style="background:#9b59b6; width:80px; height:80px; border-radius:50%; margin:0 auto; display:flex; align-items:center; justify-content:center; font-size:40px;">👤</div>
-            <p><strong><?php echo htmlspecialchars($user['name']); ?></strong></p>
-            <p style="font-size:12px"><?php echo $user['email']; ?></p>
+            <p><strong><?php echo isset($user['name']) ? htmlspecialchars($user['name']) : 'User'; ?></strong></p>
+            <p style="font-size:12px"><?php echo isset($user['email']) ? $user['email'] : ''; ?></p>
         </div>
         <div class="menu-item" onclick="showSection('orders')">📜 Order History</div>
         <div class="menu-item" onclick="showSection('notifications')">🔔 Notifications</div>
@@ -246,7 +251,7 @@ $msg = isset($_GET['msg']) ? $_GET['msg'] : '';
 
     <div class="wallet-card">
         <p>💰 Wallet Balance</p>
-        <div class="wallet-amount">₹<?php echo number_format($user['wallet'], 2); ?></div>
+        <div class="wallet-amount">₹<?php echo isset($user['wallet']) ? number_format($user['wallet'], 2) : '0.00'; ?></div>
         <button onclick="showAddFunds()" style="margin-top:15px; width:auto; padding:8px 25px;">+ Add Funds</button>
     </div>
 
@@ -259,7 +264,7 @@ $msg = isset($_GET['msg']) ? $_GET['msg'] : '';
         <div class="wallet-card">
             <h3>📜 Order History</h3>
             <?php
-            $orders = $db->query("SELECT * FROM orders WHERE user_id=".$user['id']." ORDER BY id DESC");
+            $orders = $db->query("SELECT * FROM orders WHERE user_id=".($user['id'] ?? 0)." ORDER BY id DESC");
             $has_orders = false;
             while($o = $orders->fetchArray()) {
                 $has_orders = true;
@@ -275,7 +280,7 @@ $msg = isset($_GET['msg']) ? $_GET['msg'] : '';
         <div class="wallet-card">
             <h3>🔔 Notifications</h3>
             <?php
-            $notif = $db->query("SELECT * FROM notifications WHERE user_id=".$user['id']." ORDER BY id DESC");
+            $notif = $db->query("SELECT * FROM notifications WHERE user_id=".($user['id'] ?? 0)." ORDER BY id DESC");
             $has_notif = false;
             while($n = $notif->fetchArray()) {
                 $has_notif = true;
@@ -291,7 +296,7 @@ $msg = isset($_GET['msg']) ? $_GET['msg'] : '';
         <div class="wallet-card">
             <h3>📋 Your Fund Requests</h3>
             <?php
-            $funds = $db->query("SELECT * FROM fund_requests WHERE user_id=".$user['id']." ORDER BY id DESC");
+            $funds = $db->query("SELECT * FROM fund_requests WHERE user_id=".($user['id'] ?? 0)." ORDER BY id DESC");
             $has_funds = false;
             while($f = $funds->fetchArray()) {
                 $has_funds = true;
@@ -389,7 +394,6 @@ function submitFundRequest() {
 function closePopup(id) {
     document.getElementById(id).style.display = 'none';
 }
-// Show dashboard default
 document.getElementById('dashboardDefault').style.display = 'block';
 </script>
 <?php endif; ?>
